@@ -5,9 +5,12 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+import logging
+
+logging.basicConfig(filename='app.log', level=logging.ERROR)
 
 
-def monitor_url(url, check_interval=10):
+def monitor_url(url, check_interval=3600):
     last_hash = get_content_hash(url)
 
     while True:
@@ -31,17 +34,14 @@ def send_email_alert(url):
     sender_email = os.getenv("GMAIL")
     receiver_email = os.getenv("EMAIL")
     password = os.getenv("PWD")
-
     # Création du message
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = "Alert: URL Content Changed"
-
     # Corps du message
     body = f"The content of the URL {url} has changed. Please check it."
     message.attach(MIMEText(body, "plain"))
-
     # Envoi de l'e-mail
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
@@ -49,9 +49,9 @@ def send_email_alert(url):
             server.send_message(message)
             print("Email sent successfully")
     except smtplib.SMTPAuthenticationError:
-        print("Authentication failed. Please check your email and password.")
+        logging.error("Authentication failed. Please check your email and password.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"Une erreur s'est produite : {str(e)}")
 
 
 if __name__ == '__main__':
